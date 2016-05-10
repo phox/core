@@ -990,6 +990,8 @@ define(function(require, module, exports) {
         }
         
         function open(options, callback) {
+            callback = callback || function() {};
+            
             var path = options.path = util.normalizePath(options.path);
             var type = options.editorType;
             var editor;
@@ -1100,6 +1102,11 @@ define(function(require, module, exports) {
                 else if (err) {
                     tab.classList.add("error");
                     tab.document.meta.error = true;
+                    
+                    if (tab.document.meta.closeOnError) {
+                        tab.close();
+                        return callback && callback(err);
+                    }
                     
                     alert("Error opening file", 
                         "Could not open file: " + tab.path,
@@ -1276,7 +1283,7 @@ define(function(require, module, exports) {
                 
                 // Or keep tab until the new one is loaded
                 else {
-                    previewTab.unload();
+                    previewTab.unload({ animate: false });
                 }
             }
 
@@ -1884,7 +1891,7 @@ define(function(require, module, exports) {
              * @param {String}   [options.value]         The contents of the file
              * @param {String}   [options.title]         The title of the tab
              * @param {String}   [options.tooltip]       The tooltip at the button of the tab
-             * @param {Function} callback 
+             * @param {Function} [callback]
              * @param {Error}    callback.err            An error that might 
              *   occur during the load of the file contents.
              * @param {Tab}      callback.tab            The created tab.

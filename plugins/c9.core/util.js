@@ -30,119 +30,50 @@ define(function(require, exports, module) {
             return '"' + name + '"';
         };
         
-        var SupportedIcons = {
-            "application/xhtml+xml":"html",
-            "text/css": "css",
-            "text/x-scss": "css",
-            "text/x-sass": "css",
-            "text/html":"html",
-            "application/pdf":"page_white_acrobat",
-            "image":"image",
-            "application/xml":"page_white_code_red",
-            "image/svg+xml": "page_white_picture",
-            "text/plain": "page_white_text",
-            "application/javascript": "page_white_code",
-            "application/json": "page_white_code",
-            "text/x-script.python": "page_white_code",
-            "text/x-script.ocaml": "page_white_code",
-            "text/x-script.clojure": "page_white_code",
-            "application/x-httpd-php": "page_white_php",
-            "application/x-sh": "page_white_wrench",
-            "text/x-coldfusion": "page_white_coldfusion",
-            "text/x-script.ruby": "page_white_ruby",
-            "text/x-script.coffeescript": "page_white_cup",
-            "text/cpp": "page_white_cplusplus",
-            "text/x-c": "page_white_c",
-            "text/x-logiql": "logiql",
-            "text/x-csharp": "page_white_csharp",
-            "text/x-java-source": "page_white_cup",
-            "text/x-markdown": "page_white_text",
-            "text/x-xquery": "page_white_code"
-        };
-        
-        var contentTypes = {
-            "c9search": "text/x-c9search",
-        
-            "js": "application/javascript",
-            "json": "application/json",
-            "run": "application/javascript",
-            "build": "application/javascript",
-            "css": "text/css",
-            "scss": "text/x-scss",
-            "sass": "text/x-sass",
-        
-            "xml": "application/xml",
-            "rdf": "application/rdf+xml",
-            "rss": "application/rss+xml",
-            "svg": "image/svg+xml",
-            "wsdl": "application/wsdl+xml",
-            "xslt": "application/xslt+xml",
-            "atom": "application/atom+xml",
-            "mathml": "application/mathml+xml",
-            "mml": "application/mathml+xml",
-        
-            "php": "application/x-httpd-php",
-            "phtml": "application/x-httpd-php",
-            "html": "text/html",
-            "xhtml": "application/xhtml+xml",
-            "coffee": "text/x-script.coffeescript",
-            "py": "text/x-script.python",
-            "java": "text/x-java-source",
-            "logic": "text/x-logiql",
-        
-            "ru": "text/x-script.ruby",
-            "gemspec": "text/x-script.ruby",
-            "rake": "text/x-script.ruby",
-            "rb": "text/x-script.ruby",
-        
-            "c": "text/x-c",
-            "cc": "text/x-c",
-            "cpp": "text/x-c",
-            "cxx": "text/x-c",
-            "h": "text/x-c",
-            "hh": "text/x-c",
-            "hpp": "text/x-c",
-        
-            "bmp": "image",
-            "djv": "image",
-            "djvu": "image",
-            "gif": "image",
-            "ico": "image",
-            "jpeg": "image",
-            "jpg": "image",
-            "pbm": "image",
-            "pgm": "image",
-            "png": "image",
-            "pnm": "image",
-            "ppm": "image",
-            "psd": "image",
-            "svgz": "image",
-            "tif": "image",
-            "tiff": "image",
-            "xbm": "image",
-            "xpm": "image",
-        
-            "clj": "text/x-script.clojure",
-            "ml": "text/x-script.ocaml",
-            "mli": "text/x-script.ocaml",
-            "cfm": "text/x-coldfusion",
-            "sql": "text/x-sql",
-        
-            "sh": "application/x-sh",
-            "bash": "application/x-sh",
-        
-            "xq": "text/x-xquery",
-        
-            "terminal": "terminal"
-        };
-        
+        var SupportedIcons = (function() {
+            var extToClass = Object.create(null);
+            var classToExt = {
+                "page_white_magnify": "c9search",
+                "page_white_code": ["clj", "go", "js", "json", "ml", "mli", "py", "ts", "xq"],
+                "page_white_code_red": ["jsx", "tsx", "xml"],
+                "css": ["css", "less", "sass", "scss"],
+                "page_white_picture": "svg",
+                "page_white_php": ["php", "phtml"],
+                "html": ["html", "xhtml"],
+                "page_white_cup": ["coffee", "java"],
+                "logiql": "logic",
+                "page_white_ruby": ["gemspec", "rake", "rb", "ru"],
+                "page_white_c": ["c", "cc", "cxx"],
+                "page_white_cplusplus": "cpp",
+                "page_white_h": ["h", "hh", "hpp"],
+                "image": ["bmp", "djv", "djvu", "gif", "ico", "jpeg", "jpg", "pbm", "pgm", "png", "pnm", "ppm", "psd", "svgz", "tif", "tiff", "xbm", "xpm"],
+                "page_white_acrobat": "pdf",
+                "page_white_coldfusion": "cfm",
+                "page_white_database": ["db", "sql"],
+                "page_white_wrench": ["bash", "sh"],
+                "page_white_zip": ["bz", "gz", "tar", "xz", "zip"],
+                "page_white_compressed": "rar",
+                "page_white_swoosh": ["exe", "lnk", "o", "bin", "class"],
+                "page_white_text": "txt",
+                "page_white_gear": ["bashrc", "build", "gitignore", "profile", "run", "settings"]
+            };
+            Object.keys(classToExt).forEach(function(k) {
+                var exts = classToExt[k];
+                if (typeof exts == "string") 
+                    exts = [exts];
+                exts.forEach(function(ext) {
+                    extToClass[ext] = k;
+                });
+            });
+            return extToClass;
+        })();
         plugin.getFileIcon = function(name) {
             var icon = "page_white_text";
             var ext;
         
             if (name) {
                 ext = name.split(".").pop().toLowerCase();
-                icon = SupportedIcons[contentTypes[ext]] || "page_white_text";
+                icon = SupportedIcons[ext] || "page_white_text";
             }
             return icon;
         };
@@ -165,8 +96,8 @@ define(function(require, exports, module) {
         };
         
         plugin.getContentType = function(filename) {
-            var type = filename.split(".").pop().split("!").pop().toLowerCase() || "";
-            return contentTypes[type] || "text/plain";
+            console.warn("util content type is deprecated");
+            return "text/plain";
         };
         
         // taken from http://xregexp.com/
@@ -402,7 +333,16 @@ define(function(require, exports, module) {
                 setTimeout(callback, 17);
             };
         
-        plugin.freezePublicAPI({});
+        plugin.freezePublicAPI({
+            /**
+             * @ignore
+             */
+            get supportedIcons(){ return SupportedIcons; },
+            /**
+             * @ignore
+             */
+            set supportedIcons(value){ SupportedIcons = value; }
+        });
         
         register(null, {
             util: plugin

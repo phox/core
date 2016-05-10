@@ -26,6 +26,7 @@ define(function(require, exports, module) {
         var plugin = new Panel("Ajax.org", main.consumes, {
             index: options.index || 300,
             caption: "Commands",
+            buttonCSSClass: "commands",
             minWidth: 150,
             autohide: true,
             where: options.where || "left"
@@ -77,6 +78,9 @@ define(function(require, exports, module) {
 
             // @TODO this is probably not sufficient
             layout.on("resize", function(){ tree.resize() }, plugin);
+            
+            var key = commands.getPrettyHotkey("commands");
+            txtFilter.setAttribute("initial-message", key);
             
             tree.textInput = txtFilter.ace.textInput;
             

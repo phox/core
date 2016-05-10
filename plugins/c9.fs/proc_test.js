@@ -66,8 +66,8 @@ require(["lib/architect/architect", "lib/chai/chai"], function (architect, chai)
                     });
                 });
                 
-                //should test the kill() method - which is broken now
-                //Another test - see that cwd defaults to the root vfs dir when resolve is set to true
+                // should test the kill() method - which is broken now
+                // Another test - see that cwd defaults to the root vfs dir when resolve is set to true
             });
             describe('execFile()', function() {
                 this.timeout(10000);
@@ -101,14 +101,25 @@ require(["lib/architect/architect", "lib/chai/chai"], function (architect, chai)
                     });
                 });
                 
-                //should test the kill() method - which is broken now
-                //Another test - see that cwd defaults to the root vfs dir when resolve is set to true
+                it('should pass stdout and stderr', function(done) {
+                    proc.execFile("node", {
+                        args: ["-v"]
+                    }, function(e, stdout, stderr) {
+                        expect(stdout[0]).to.equal("v");
+                        expect(stderr).to.equal("");
+                        expect(e).to.not.ok;
+                        done();
+                    });
+                });
+                
+                // should test the kill() method - which is broken now
+                // Another test - see that cwd defaults to the root vfs dir when resolve is set to true
             });
             describe('pty()', function() {
                 this.timeout(30000);
                 
                 it("Terminal Test", function(done) {
-                    var look = /\]0;.*\-\-color=auto/;
+                    var look = "--color=auto";
                     
                     var args = ["-is"];
                     proc.pty("bash", {
@@ -124,14 +135,13 @@ require(["lib/architect/architect", "lib/chai/chai"], function (architect, chai)
                         var hadRows = false;
                         
                         pty.on("data", function(data) {
-                            
                             if (typeof data == "object" && data.rows) {
                                 expect(data).property("rows").is.equal(80);
                                 expect(data).property("cols").is.equal(80);
                                 hadRows = true;
                             } else {
                                 stdout.push(data);
-                                if (hadRows && stdout.join("").match(look) > -1)
+                                if (hadRows && stdout.join("").indexOf(look) > -1)
                                     pty.kill();
                             }
                         });

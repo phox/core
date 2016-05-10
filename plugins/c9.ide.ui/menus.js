@@ -946,7 +946,11 @@ define(function(require, exports, module) {
                 aml.removeChild(item.aml);
             }
             
-            function show(x, y) {
+            function show(x, y, type) {
+                if (type == "context") {
+                    x += 2;
+                    y += 2;
+                }
                 lastCoords = { x : x, y : y };
                 aml.display(x, y);
             }
@@ -965,7 +969,7 @@ define(function(require, exports, module) {
                         checkItems.call(this, e);
                     },
                     "onitemclick" : function(e) {
-                        emit("itemclick", { value : e.value });
+                        emit("itemclick", { value : e.value, item: e.relatedNode });
                     }
                 });
                 aml.cloud9menu = plugin;

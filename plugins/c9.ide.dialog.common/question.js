@@ -27,6 +27,11 @@ define(function(require, module, exports) {
         /***** Methods *****/
         
         function show(title, header, msg, onYes, onNo, options) {
+            if (onYes && typeof onYes !== "function")
+                return show(title, header, msg, null, null, onYes);
+            if (onNo && typeof onNo !== "function")
+                return show(title, header, msg, onYes, null, onNo);
+            
             if (!options)
                 options = {};
                 
@@ -40,11 +45,16 @@ define(function(require, module, exports) {
                 plugin.heading = options && options.isHTML ? header : util.escapeXml(header);
                 plugin.body = options && options.isHTML ? msg : util.escapeXml(msg).replace(/\n/g, "<br>");
                 
+                plugin.getElement("yes").setCaption(options.yes || "Yes");
+                plugin.getElement("no").setCaption(options.no || "No");
+                plugin.getElement("yestoall").setCaption(options.yestoall || "Yes to All");
+                plugin.getElement("notoall").setCaption(options.notoall || "No to All");
+                
                 plugin.allowClose = cancel;
                 
                 var gotYesNo = false;
                 plugin.once("hide", function(){
-                    !gotYesNo && cancel && onNo(false, true, metadata);
+                    !gotYesNo && cancel && onNo && onNo(false, true, metadata);
                 });
                 
                 plugin.update([
@@ -53,22 +63,22 @@ define(function(require, module, exports) {
                     { id: "yestoall", visible: all, onclick: function(){ 
                         gotYesNo = true; 
                         plugin.hide(); 
-                        onYes(true, metadata); 
+                        onYes && onYes(true, metadata); 
                     }},
                     { id: "notoall", visible: all, onclick: function(){ 
                         gotYesNo = true;
                         plugin.hide(); 
-                        onNo(true, false, metadata); 
+                        onNo && onNo(true, false, metadata); 
                     }},
                     { id: "yes", onclick: function(){ 
                         gotYesNo = true; 
                         plugin.hide(); 
-                        onYes(false, metadata); 
+                        onYes && onYes(false, metadata); 
                     }},
                     { id: "no", onclick: function(){ 
                         gotYesNo = true;
                         plugin.hide(); 
-                        onNo(false, false, metadata); 
+                        onNo && onNo(false, false, metadata); 
                     }}
                 ]);
             }, options.queue === false);

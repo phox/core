@@ -94,6 +94,9 @@ require([
                 var x = new EventEmitter();
                 return x;
             })(),
+            "vfs.log": {
+                log: function(){} 
+            },
             anims: (function(){
                 var x = new EventEmitter();
                 x.animateSplitBoxNode = function(node, opt) {
@@ -148,6 +151,10 @@ require([
                 obj.watch = function(){};
                 return obj;
             })(),
+            "fs.cache": (function(){
+                var obj = new EventEmitter();
+                return obj;
+            })(),
             tooltip: {
                 add: function(){}
             },
@@ -162,7 +169,7 @@ require([
                 return prefs;
             })(),
             analytics: {
-                addTrait: function() {}
+                updateTraits: function() {}
             },
             commands: (function(){
                 var commands = {};
@@ -195,6 +202,8 @@ require([
                 c.exec = function(name) {
                     commands[name].exec();
                 };
+                c.getPrettyHotkey = function(name) { return "" };
+                c.getHotkey = function(name) { return "" };
                 c.getExceptionList = function(){ return []; };
                 
                 return c;
@@ -332,6 +341,13 @@ require([
                 
                 return plugin;
             },
+            Dialog: function(developer, deps, options) {
+                var plugin = new imports.Plugin(developer, deps);
+                plugin.freezePublicAPI.baseclass();
+                plugin.freezePublicAPI({});
+                
+                return plugin;
+            },
             tree: (function(){
                 var tree = new EventEmitter();
                 tree.createFolder = function(){};
@@ -394,6 +410,11 @@ require([
                     return callback ? callback(null, ws) : ws;
                 }
             },
+            "preferences.experimental": {
+                addExperiment: function() {
+                    return false;
+                }
+            },
             "ace.gotoline": {},
             "ace.stripws": {
                 disable: function(){},
@@ -410,6 +431,10 @@ require([
                 show: function(msg) { console.warn(msg); },
                 hide: function(msg) { },
             },
+            "dialog.info": {
+                show: function(msg) { console.log(msg); },
+                hide: function(msg) { },
+            },
             "installer": { createSession : function(){}, reinstall: function(){}, isInstalled: function(){ return true; } },
             "run.gui": { getElement : function(){} },
             "debugger": {debug: function() {}, stop: function(){}},
@@ -424,6 +449,15 @@ require([
                 log: function() {},
                 increment: function() {}
             },
+            MountTab: function(developer, deps, options) {
+                var plugin = new imports.Plugin(developer, deps);
+                plugin.freezePublicAPI.baseclass();
+                plugin.freezePublicAPI({
+                });
+                
+                return plugin;
+            },
+            mount: {},
             error_handler: {
                 log: function() {},
                 reportError: function(){}
@@ -484,27 +518,51 @@ require([
                 x.unregister = function(){};
                 return x;
             })(),
+            "immediate": (function(){
+                var x = new EventEmitter();
+                x.register = function(){};
+                x.unregister = function(){};
+                return x;
+            })(),
+            "c9.analytics": (function(){
+                var x = new EventEmitter();
+                x.register = function(){};
+                x.unregister = function(){};
+                return x;
+            })(),
         });
     };
     
     expect.setupArchitectTest = function(config, _, options) {
         if (options && options.mockPlugins) {
             config.push({
-                consumes: [],
+                consumes: options.existingPlugins || [],
                 provides: options.mockPlugins,
                 setup: expect.html.mocked
             });
         }
         architect.resolveConfig(config, function(err, config) {
-            /*global describe it before after = */
+            /*global describe it before after */
             if (err) throw err;
             var app = architect.createApp(config, function(err, app) {
                 if (err && err.unresolved && !config.unresolved) {
-                    console.warn("Adding mock services for " + err.unresolved);
-                    config.unresolved = err.unresolved;
-                    return expect.setupArchitectTest(config, architect, {
-                        mockPlugins: config.unresolved
+                    expect.html.mocked({}, {}, function(a, mockServices) { 
+                        err.missingMock = err.unresolved.filter(function(x) {
+                            return !mockServices[x];
+                        });
+                        config.unresolved = err.unresolved.filter(function(x) {
+                            return mockServices[x];
+                        });
                     });
+                    if (err.missingMock.length) {
+                        console.error("Missing mock services for " + err.missingMock);
+                    } else {
+                        console.warn("Adding mock services for " + err.unresolved);
+                        return expect.setupArchitectTest(config, architect, {
+                            mockPlugins: config.unresolved,
+                            existingPlugins: err.resolved
+                        });
+                    }
                 }
                 if (typeof describe == "function") {
                     describe('app', function() {

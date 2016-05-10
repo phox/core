@@ -1,6 +1,7 @@
 "use strict";
 
 var errors = require("http-error");
+var EventEmitter = require("events").EventEmitter;
 
 plugin.consumes = [
     "connect",
@@ -72,10 +73,12 @@ var NICE_USER_ERROR_MSG = "Something went wrong. Please retry in a few minutes a
 
 function plugin(options, imports, register) {
     var connect = imports.connect;
+    
     var showStackTrace = false;
 
     var frontdoor = require("frontdoor");
     var statics = imports["connect.static"];
+    var emitter = new EventEmitter();
 
     function isDev(mode) {
         return /^(onlinedev|devel)$/.test(mode);
@@ -99,7 +102,6 @@ function plugin(options, imports, register) {
         return code;
     }
 
-
     connect.useError(function(err, req, res, next) {
         if (typeof err == "string")
             err = new errors.InternalServerError(err);
@@ -112,6 +114,14 @@ function plugin(options, imports, register) {
             
         var accept = req.headers.accept || '';
 
+        if (statusCode == 500) {
+            console.error(err && err.stack);
+            emitter.emit("internalServerError", {
+                err: err,
+                req: req
+            });
+        }
+
         if (/json/.test(accept)) {
             var error = {
                 code: statusCode,
@@ -122,7 +132,8 @@ function plugin(options, imports, register) {
             
             var allowedErrorKeys = [
                 "message", "projectState", "premium", "retryIn", "progress",
-                "oldHost", "blocked"
+                "oldHost", "blocked", "className", "errors", "subtype",
+                "fatal", "ignore"
             ];
             
             allowedErrorKeys.forEach(function(key) {
@@ -159,6 +170,8 @@ function plugin(options, imports, register) {
     });
 
     register(null, {
-        "connect.error": {}
+        "connect.error": {
+            on: emitter.on.bind(emitter)
+        }
     });
 }

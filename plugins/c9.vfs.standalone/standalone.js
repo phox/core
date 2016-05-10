@@ -168,22 +168,33 @@ function plugin(options, imports, register) {
         });
         var path = resolve(__dirname + "/../../build/output/latest.tar.gz");
         fs.readlink(path, function(err, target) {
+            if (err) return next(err);
+            
             res.end((target || "").split(".")[0]);
         });
     });
     
     api.get("/update/:path*", function(req, res, next) {
         var filename = req.params.path;
-        var path = resolve(__dirname + "/../../build/output/" + filename);
+        var path = resolve(__dirname + "/../../build/output/" + resolve("/" + filename));
         
-        res.writeHead(200, {"Content-Type": "application/octet-stream"});
         var stream = fs.createReadStream(path);
-        stream.pipe(res);
+        stream.on("error", function(err) {
+            next(err);
+        });
+        stream.on("data", function(data) {
+            if (!res.headersSent)
+                res.writeHead(200, {"Content-Type": "application/octet-stream"});
+                
+            res.write(data);
+        });
+        stream.on("end", function(data) {
+            res.end();
+        });
     });
 
     api.get("/configs/require_config.js", function(req, res, next) {
         var config = res.getOptions().requirejsConfig || {};
-        config.waitSeconds = 240;
         
         res.writeHead(200, {"Content-Type": "application/javascript"});
         res.end("requirejs.config(" + JSON.stringify(config) + ");");
@@ -210,8 +221,6 @@ function plugin(options, imports, register) {
         });
     });
     
-    api.get("/api.json", {name: "api"}, frontdoor.middleware.describeApi(api));
-
     // fake authentication
     api.authenticate = api.authenticate || function() {
         return function(req, res, next) { 
@@ -244,7 +253,7 @@ function plugin(options, imports, register) {
     };    
     api.updatConfig = api.updatConfig || function(opts, params) {
         var id = params.token;
-        opts.accessToken = opts.extendToken = id || "token";
+        opts.accessToken = id || "token";
         var user = opts.extendOptions.user;
         user.id = id || -1;
         user.name = id ? "user" + id : "johndoe";

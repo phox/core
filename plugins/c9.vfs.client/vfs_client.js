@@ -146,6 +146,7 @@ define(function(require, exports, module) {
         
         function rest(path, options, callback) {
             if (!vfs || !connection || connection.readyState != "open") {
+                // console.error("[vfs-client] Cannot perform rest action for ", path, " vfs is disconnected");
                 var stub = { abort: function(){ buffer[this.id]= null; } };
                 stub.id = buffer.push([path, options, callback, stub]) - 1;
                 return stub;
@@ -208,6 +209,7 @@ define(function(require, exports, module) {
         }
         
         function reconnect(callback) {
+            if (!connection) return;
             connection.socket.setSocket(null);
             
             vfsEndpoint.get(protocolVersion, function(err, urls) {
@@ -253,7 +255,7 @@ define(function(require, exports, module) {
                         err.message = "SSH permission denied. Please review your workspace configuration.";
                     return showAlert("Workspace Error", "Unable to access your workspace", err.message, function() {
                         window.location = dashboardUrl;
-                    });
+                    }, { yes: "Return to dashboard" });
                 case "reload":
                     lastError = showError(err.message + ". Please reload this window.", -1);
                     setTimeout(function() {
@@ -335,6 +337,11 @@ define(function(require, exports, module) {
         plugin.on("unload", function(){
             loaded = false;
             
+            if (consumer)
+                consumer.disconnect();
+            if (connection)
+                connection.disconnect();
+            
             id = null;
             buffer = [];
             region = null;
@@ -345,6 +352,7 @@ define(function(require, exports, module) {
             serviceUrl = null;
             eioOptions = null;
             consumer = null;
+            connection = null;
             vfs = null;
             showErrorTimer = null;
             showErrorTimerMessage = null;

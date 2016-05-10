@@ -76,17 +76,19 @@ function main(config, settings, options, callback) {
         })
         .concat({
             consumes: [],
-            provides: ["cdn.build", "db", "health"],
+            provides: ["cdn.build", "db", "redis", "health"],
             setup: function(options, imports, register) {
                 register(null, {
                     "cdn.build": {},
                     "db": {
                         "Vfs": {
-                            findAllAndPurge: function(maxVfsAge, callback) {
+                            findAllValidServers: function(maxVfsAge, purgeInvalid, callback) {
                                 callback(null, [{}]);
                             }
-                        }
+                        },
+                        "User": {}
                     }, 
+                    "redis": {},
                     "health": { 
                         addCheck: function() {}
                     }
